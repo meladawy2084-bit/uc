@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>مخطط هيكل السمكة - Fishbone Diagram</title>
     <!-- html2canvas library for exporting image -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -41,6 +41,7 @@
             border-bottom: 2px solid var(--secondary-color);
             padding-bottom: 10px;
             margin-top: 0;
+            font-size: 1.5em;
         }
 
         .input-group {
@@ -127,33 +128,41 @@
         /* Canvas Area */
         .canvas-area {
             flex-grow: 1;
-            padding: 40px;
+            padding: 20px;
             display: flex;
-            align-items: flex-start;
-            justify-content: flex-start;
+            align-items: center;
+            justify-content: center;
             overflow: auto;
             background: #e9ecef;
+            position: relative;
         }
 
         /* 
-           FIX 1: Adjusted export-target to inline-flex and added large padding.
-           This ensures html2canvas captures overflowing text on the left and right.
+           الحجم الطبيعي للرؤية على الشاشة (بدون مسافات ضخمة تعطل الموبايل) 
         */
         #export-target {
             background: white;
-            padding: 120px 180px 120px 320px; /* Top, Right(180), Bottom, Left(320 to fit text) */
-            margin: auto; /* Centers in scrollable area */
+            padding: 100px; 
+            margin: auto; 
             display: inline-flex;
             align-items: center;
             justify-content: center;
             box-shadow: 0 0 20px rgba(0,0,0,0.05);
             border-radius: 12px;
+            transition: padding 0s; /* منع التأثير البطيء لتغيير الحجم */
+        }
+
+        /* 
+           الكلاس ده بيشتغل بس لحظة التقاط الصورة (Export) عشان يوسع المساحة ويمنع القص
+        */
+        #export-target.export-mode {
+            padding: 300px 200px 300px 450px !important; 
         }
 
         .diagram-container {
             position: relative;
-            width: 850px; /* Fixed width for the spine */
-            height: 10px; /* Minimal height to act as a center axis */
+            width: 950px; 
+            height: 10px; 
             display: flex;
             align-items: center;
         }
@@ -166,31 +175,31 @@
             border-radius: 3px;
         }
 
+        /* رأس السمكة (مثلث) */
         .head {
             position: absolute;
-            right: -130px; /* Adjust to sit at the end of the spine */
-            top: -55px; /* Center relative to the spine */
+            right: -130px; 
+            top: -65px; 
             width: 140px;
-            height: 110px;
+            height: 130px;
             background: var(--accent-color);
             color: white;
+            clip-path: polygon(100% 50%, 0 0, 0 100%); /* شكل المثلث */
             display: flex;
             align-items: center;
             justify-content: center;
             text-align: center;
-            padding: 15px;
+            padding: 10px 40px 10px 10px; /* دفع النص للجهة الواسعة من المثلث */
             box-sizing: border-box;
             font-weight: bold;
-            font-size: 1.2em;
+            font-size: 1.1em;
             word-break: break-word;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
 
         .bone {
             position: absolute;
             width: 4px;
-            height: 250px;
+            height: 260px; 
             background: #444;
             border-radius: 2px;
         }
@@ -207,14 +216,10 @@
             font-size: 1.1em;
         }
 
-        /* 
-           FIX 2: Properly attach bones to spine. 
-           Top bones originate from bottom, Bottom bones originate from top.
-        */
         .bone-top {
-            bottom: 100%; /* Sits exactly on top of the spine */
+            bottom: 100%; 
             transform-origin: center bottom;
-            transform: rotate(45deg); /* Leans Top-Right towards head */
+            transform: rotate(45deg); 
         }
         .bone-top .bone-label-box {
             top: -45px;
@@ -223,9 +228,9 @@
         }
 
         .bone-bottom {
-            top: 100%; /* Sits exactly below the spine */
+            top: 100%; 
             transform-origin: center top;
-            transform: rotate(-45deg); /* Leans Bottom-Right towards head */
+            transform: rotate(-45deg); 
         }
         .bone-bottom .bone-label-box {
             bottom: -45px;
@@ -233,7 +238,6 @@
             transform: translateX(-50%);
         }
 
-        /* Sub-bones */
         .sub-bone-line {
             position: absolute;
             height: 2px;
@@ -249,10 +253,34 @@
             font-weight: 600;
         }
 
-        /* Counter-rotate the sub-bones to make them perfectly horizontal */
         .bone-top .sub-bone-line { right: 0; transform: rotate(-45deg); transform-origin: right center; }
         .bone-bottom .sub-bone-line { right: 0; transform: rotate(45deg); transform-origin: right center; }
 
+        /* توافق الموبايل والشاشات الصغيرة */
+        @media (max-width: 1000px) {
+            body { 
+                flex-direction: column; /* تحويل العرض ليكون عمودي */
+                height: 100vh;
+            }
+            .sidebar { 
+                width: 100%; 
+                height: 45vh; /* أخذ مساحة محددة لأدوات التحكم */
+                border-bottom: 3px solid var(--secondary-color);
+                box-sizing: border-box;
+            }
+            .canvas-area { 
+                width: 100%; 
+                height: 55vh; /* أخذ المساحة المتبقية للرسمة */
+                padding: 10px;
+                box-sizing: border-box;
+                align-items: flex-start;
+                justify-content: flex-start;
+            }
+            #export-target {
+                margin: 0; /* لضمان ظهور الرسمة كاملة والسماح بالـ Scroll */
+                padding: 60px; /* تصغير المساحة البيضاء للموبايل */
+            }
+        }
     </style>
 </head>
 <body>
@@ -285,7 +313,7 @@
         
     </div>
 
-    <div class="canvas-area">
+    <div class="canvas-area" id="canvas-scroll-area">
         <div id="export-target">
             <div class="diagram-container">
                 <div class="spine" id="spine">
@@ -408,17 +436,15 @@
             
             headNode.innerText = diagramData.effect;
             
-            // Clear previous bones
             const existingBones = spine.querySelectorAll('.bone');
             existingBones.forEach(b => b.remove());
 
             const total = diagramData.causes.length;
-            const spacing = 90 / (total + 1); // Reduced slightly so bones don't hit the exact edges
+            const spacing = 85 / (total + 1); 
 
             diagramData.causes.forEach((cat, index) => {
                 const isTop = index % 2 === 0;
-                // Shift position incrementally to stagger them nicely
-                const pos = 100 - (5 + spacing * (index + 1));
+                const pos = 100 - (8 + spacing * (index + 1));
                 const catColor = cat.color || "#3498db";
                 
                 const bone = document.createElement('div');
@@ -427,10 +453,8 @@
                 
                 bone.innerHTML = `<div class="bone-label-box" style="background-color: ${catColor}">${cat.name}</div>`;
                 
-                // FIX 3: Adjusted sub-bone spacing so they don't overlap with the spine line
                 const subSpacing = 75 / (cat.subs.length + 1);
                 cat.subs.forEach((sub, sIndex) => {
-                    // Starts from 15% of the bone to avoid intersection with spine
                     const subPos = 15 + subSpacing * (sIndex + 1);
                     const subLine = document.createElement('div');
                     subLine.className = 'sub-bone-line';
@@ -439,8 +463,8 @@
                     const subText = document.createElement('div');
                     subText.className = 'sub-bone-text';
                     subText.innerText = sub;
-                    subText.style.right = '65px'; // Distance from the small line
-                    subText.style.top = '-12px'; // Center text vertically on line
+                    subText.style.right = '70px'; 
+                    subText.style.top = '-12px'; 
                     
                     subLine.appendChild(subText);
                     bone.appendChild(subLine);
@@ -482,19 +506,43 @@
 
         async function exportAsImage() {
             const target = document.getElementById('export-target');
-            const canvas = await html2canvas(target, {
-                scale: 2, 
-                backgroundColor: "#ffffff",
-                logging: false,
-                useCORS: true
-            });
-            const link = document.createElement('a');
-            link.download = `Fishbone_Diagram_Final.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
+            const scrollArea = document.getElementById('canvas-scroll-area');
+            
+            // 1. إضافة مساحة الأمان قبل التصوير مباشرة (لتجنب القص)
+            target.classList.add('export-mode');
+            
+            // إعطاء وقت قصير للمتصفح لتطبيق الكلاس الجديد
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            // حفظ موقع الـ Scroll الحالي
+            const originalScrollLeft = scrollArea.scrollLeft;
+            const originalScrollTop = scrollArea.scrollTop;
+            
+            // تصفير الـ Scroll لتجنب أي قص من مكتبة التصوير
+            scrollArea.scrollLeft = 0;
+            scrollArea.scrollTop = 0;
+
+            try {
+                const canvas = await html2canvas(target, {
+                    scale: 2, 
+                    backgroundColor: "#ffffff",
+                    logging: false,
+                    useCORS: true,
+                    allowTaint: true
+                });
+                
+                const link = document.createElement('a');
+                link.download = `Fishbone_Diagram_Final.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            } finally {
+                // 2. إزالة مساحة الأمان وإعادة كل شيء لطبيعته بعد التصوير
+                target.classList.remove('export-mode');
+                scrollArea.scrollLeft = originalScrollLeft;
+                scrollArea.scrollTop = originalScrollTop;
+            }
         }
 
-        // Initialize App
         updateUI();
     </script>
 </body>
