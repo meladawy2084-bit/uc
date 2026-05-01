@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مخطط هيكل السمكة - Fishbone Diagram</title>
+    <!-- html2canvas library for exporting image -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --bg-color: #f8f9fa;
+            --text-color: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            flex-direction: row;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar Controls */
+        .sidebar {
+            width: 380px;
+            background: white;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            overflow-y: auto;
+            z-index: 10;
+        }
+
+        .sidebar h2 {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+        }
+
+        .category-item {
+            background: #f1f3f5;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-right: 4px solid var(--secondary-color);
+        }
+
+        .category-header {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .sub-cause-item {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 5px;
+            padding-right: 15px;
+        }
+
+        button {
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 12px;
+            font-weight: bold;
+            transition: opacity 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.8;
+        }
+
+        .btn-add { background-color: #27ae60; color: white; width: 100%; margin-top: 5px; }
+        .btn-remove { background-color: var(--accent-color); color: white; padding: 5px 10px; }
+        .btn-export { background-color: var(--primary-color); color: white; width: 100%; font-size: 1.1em; padding: 15px; margin-top: 20px; }
+
+        /* Canvas Area */
+        .canvas-area {
+            flex-grow: 1;
+            padding: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: auto;
+            background: #e9ecef;
+        }
+
+        #export-target {
+            background: white;
+            padding: 60px;
+            min-width: 900px;
+            height: 500px;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+        }
+
+        /* Fishbone Visuals */
+        .diagram-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+        }
+
+        .spine {
+            width: 100%;
+            height: 4px;
+            background: #333;
+            position: relative;
+        }
+
+        .head {
+            position: absolute;
+            right: -130px;
+            top: -60px;
+            width: 130px;
+            height: 120px;
+            background: var(--accent-color);
+            color: white;
+            clip-path: polygon(100% 50%, 0 0, 0 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 10px;
+            box-sizing: border-box;
+            font-weight: bold;
+            font-size: 1.1em;
+            word-break: break-word;
+        }
+
+        .bone {
+            position: absolute;
+            width: 3px;
+            height: 150px;
+            background: #444;
+            transform-origin: center bottom;
+        }
+
+        .bone-label-box {
+            position: absolute;
+            background: var(--secondary-color);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            white-space: nowrap;
+            z-index: 2;
+        }
+
+        /* Top Bones */
+        .bone-top {
+            bottom: 0;
+            transform: rotate(45deg);
+        }
+        .bone-top .bone-label-box {
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* Bottom Bones */
+        .bone-bottom {
+            top: 0;
+            transform: rotate(-45deg);
+        }
+        .bone-bottom .bone-label-box {
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .sub-bone-line {
+            position: absolute;
+            height: 2px;
+            background: #888;
+            width: 50px;
+        }
+
+        .sub-bone-text {
+            position: absolute;
+            font-size: 0.85em;
+            white-space: nowrap;
+            color: #555;
+        }
+
+        .bone-top .sub-bone-line { right: 0; transform: rotate(-45deg); transform-origin: right center; }
+        .bone-bottom .sub-bone-line { right: 0; transform: rotate(45deg); transform-origin: right center; }
+
+        @media (max-width: 1000px) {
+            body { flex-direction: column; overflow-y: auto; height: auto; }
+            .sidebar { width: 100%; height: auto; }
+            .canvas-area { min-height: 600px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <h2>إعدادات المخطط</h2>
+        
+        <div class="input-group">
+            <label>المشكلة الأساسية (رأس السمكة)</label>
+            <input type="text" id="head-input" value="تأخر تسليم المشروع" oninput="updateDiagram()">
+        </div>
+
+        <hr>
+        <h3>الأسباب الرئيسية</h3>
+        <div id="categories-list">
+            <!-- Dynamic categories -->
+        </div>
+
+        <button class="btn-add" onclick="addCategory()">+ إضافة سبب رئيسي</button>
+        
+        <button class="btn-export" onclick="exportAsImage()">📥 حفظ كصورة (PNG)</button>
+        
+        <p style="font-size: 0.8em; color: #666; margin-top: 20px; text-align: center;">
+            برمجة أداة حل المشكلات - Fishbone
+        </p>
+    </div>
+
+    <div class="canvas-area">
+        <div id="export-target">
+            <div class="diagram-container">
+                <div class="spine" id="spine">
+                    <div class="head" id="head-node">المشكلة</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let diagramData = {
+            head: "تأخر تسليم المشروع",
+            categories: [
+                { name: "الأفراد (People)", subCauses: ["نقص الخبرة", "ضغط العمل"] },
+                { name: "الأساليب (Methods)", subCauses: ["غياب التوثيق"] },
+                { name: "الأدوات (Tools)", subCauses: ["أجهزة قديمة"] },
+                { name: "البيئة (Environment)", subCauses: ["ضوضاء المكتب"] }
+            ]
+        };
+
+        function addCategory() {
+            diagramData.categories.push({ name: "سبب جديد", subCauses: ["تفصيل"] });
+            updateUI();
+        }
+
+        function removeCategory(index) {
+            diagramData.categories.splice(index, 1);
+            updateUI();
+        }
+
+        function updateCategoryName(index, val) {
+            diagramData.categories[index].name = val;
+            renderCanvas();
+        }
+
+        function addSubCause(catIndex) {
+            diagramData.categories[catIndex].subCauses.push("سبب فرعي");
+            updateUI();
+        }
+
+        function removeSubCause(catIndex, subIndex) {
+            diagramData.categories[catIndex].subCauses.splice(subIndex, 1);
+            updateUI();
+        }
+
+        function updateSubName(catIndex, subIndex, val) {
+            diagramData.categories[catIndex].subCauses[subIndex] = val;
+            renderCanvas();
+        }
+
+        function updateUI() {
+            const list = document.getElementById('categories-list');
+            list.innerHTML = '';
+            
+            diagramData.categories.forEach((cat, cIndex) => {
+                const catDiv = document.createElement('div');
+                catDiv.className = 'category-item';
+                
+                catDiv.innerHTML = `
+                    <div class="category-header">
+                        <input type="text" value="${cat.name}" oninput="updateCategoryName(${cIndex}, this.value)">
+                        <button class="btn-remove" onclick="removeCategory(${cIndex})">حذف</button>
+                    </div>
+                    <div id="subs-${cIndex}">
+                        ${cat.subCauses.map((sub, sIndex) => `
+                            <div class="sub-cause-item">
+                                <input type="text" value="${sub}" oninput="updateSubName(${cIndex}, ${sIndex}, this.value)">
+                                <button class="btn-remove" style="background:#666" onclick="removeSubCause(${cIndex}, ${sIndex})">×</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <button class="btn-add" style="background:#3498db; font-size:0.8em" onclick="addSubCause(${cIndex})">+ سبب فرعي</button>
+                `;
+                list.appendChild(catDiv);
+            });
+            renderCanvas();
+        }
+
+        function updateDiagram() {
+            diagramData.head = document.getElementById('head-input').value;
+            renderCanvas();
+        }
+
+        function renderCanvas() {
+            const headNode = document.getElementById('head-node');
+            const spine = document.getElementById('spine');
+            
+            headNode.innerText = diagramData.head;
+            
+            // Clear previous bones
+            const existingBones = spine.querySelectorAll('.bone');
+            existingBones.forEach(b => b.remove());
+
+            const total = diagramData.categories.length;
+            const spacing = 100 / (total + 1);
+
+            diagramData.categories.forEach((cat, index) => {
+                const isTop = index % 2 === 0;
+                const pos = 100 - (spacing * (index + 1));
+                
+                const bone = document.createElement('div');
+                bone.className = `bone ${isTop ? 'bone-top' : 'bone-bottom'}`;
+                bone.style.right = pos + '%';
+                
+                bone.innerHTML = `<div class="bone-label-box">${cat.name}</div>`;
+                
+                // Sub causes
+                const subSpacing = 100 / (cat.subCauses.length + 1);
+                cat.subCauses.forEach((sub, sIndex) => {
+                    const subPos = subSpacing * (sIndex + 1);
+                    const subLine = document.createElement('div');
+                    subLine.className = 'sub-bone-line';
+                    subLine.style[isTop ? 'bottom' : 'top'] = subPos + '%';
+                    
+                    const subText = document.createElement('div');
+                    subText.className = 'sub-bone-text';
+                    subText.innerText = sub;
+                    subText.style.right = '55px';
+                    subText.style.top = '-8px';
+                    
+                    subLine.appendChild(subText);
+                    bone.appendChild(subLine);
+                });
+
+                spine.appendChild(bone);
+            });
+        }
+
+        async function exportAsImage() {
+            const target = document.getElementById('export-target');
+            const canvas = await html2canvas(target, {
+                scale: 2,
+                backgroundColor: "#ffffff",
+                logging: false
+            });
+            const link = document.createElement('a');
+            link.download = 'Fishbone-Diagram.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        // Initial render
+        updateUI();
+    </script>
+</body>
+</html>
