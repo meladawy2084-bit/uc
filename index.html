@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>مخطط هيكل السمكة - Fishbone Diagram</title>
+    <!-- html2canvas library for exporting image -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root {
@@ -128,49 +129,51 @@
             flex-grow: 1;
             padding: 40px;
             display: flex;
-            align-items: center;
-            justify-content: center;
+            align-items: flex-start;
+            justify-content: flex-start;
             overflow: auto;
             background: #e9ecef;
         }
 
+        /* 
+           FIX 1: Adjusted export-target to inline-flex and added large padding.
+           This ensures html2canvas captures overflowing text on the left and right.
+        */
         #export-target {
             background: white;
-            padding: 60px;
-            min-width: 1050px;
-            height: 650px;
-            position: relative;
-            box-shadow: 0 0 20px rgba(0,0,0,0.05);
-            display: flex;
+            padding: 120px 180px 120px 320px; /* Top, Right(180), Bottom, Left(320 to fit text) */
+            margin: auto; /* Centers in scrollable area */
+            display: inline-flex;
             align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+            border-radius: 12px;
         }
 
-        /* Fishbone Visuals */
         .diagram-container {
             position: relative;
-            width: 100%;
-            height: 100%;
+            width: 850px; /* Fixed width for the spine */
+            height: 10px; /* Minimal height to act as a center axis */
             display: flex;
             align-items: center;
         }
 
         .spine {
             width: 100%;
-            height: 5px;
+            height: 6px;
             background: #2c3e50;
             position: relative;
-            border-radius: 2px;
+            border-radius: 3px;
         }
 
         .head {
             position: absolute;
-            right: -140px;
-            top: -70px;
+            right: -130px; /* Adjust to sit at the end of the spine */
+            top: -55px; /* Center relative to the spine */
             width: 140px;
-            height: 140px;
+            height: 110px;
             background: var(--accent-color);
             color: white;
-            clip-path: polygon(100% 50%, 0 0, 0 100%);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -180,49 +183,57 @@
             font-weight: bold;
             font-size: 1.2em;
             word-break: break-word;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
 
         .bone {
             position: absolute;
-            width: 3px;
-            height: 240px;
+            width: 4px;
+            height: 250px;
             background: #444;
-            transform-origin: center bottom;
+            border-radius: 2px;
         }
 
         .bone-label-box {
             position: absolute;
             color: white;
-            padding: 6px 14px;
+            padding: 8px 16px;
             border-radius: 6px;
             font-weight: bold;
             white-space: nowrap;
             z-index: 2;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            font-size: 1.1em;
         }
 
-        /* Top Bones */
+        /* 
+           FIX 2: Properly attach bones to spine. 
+           Top bones originate from bottom, Bottom bones originate from top.
+        */
         .bone-top {
-            bottom: 0;
-            transform: rotate(45deg);
+            bottom: 100%; /* Sits exactly on top of the spine */
+            transform-origin: center bottom;
+            transform: rotate(45deg); /* Leans Top-Right towards head */
         }
         .bone-top .bone-label-box {
-            top: -30px;
+            top: -45px;
             left: 50%;
             transform: translateX(-50%);
         }
 
-        /* Bottom Bones */
         .bone-bottom {
-            top: 0;
-            transform: rotate(-45deg);
+            top: 100%; /* Sits exactly below the spine */
+            transform-origin: center top;
+            transform: rotate(-45deg); /* Leans Bottom-Right towards head */
         }
         .bone-bottom .bone-label-box {
-            bottom: -30px;
+            bottom: -45px;
             left: 50%;
             transform: translateX(-50%);
         }
 
+        /* Sub-bones */
         .sub-bone-line {
             position: absolute;
             height: 2px;
@@ -232,20 +243,16 @@
 
         .sub-bone-text {
             position: absolute;
-            font-size: 0.9em;
+            font-size: 0.95em;
             white-space: nowrap;
             color: #2c3e50;
             font-weight: 600;
         }
 
+        /* Counter-rotate the sub-bones to make them perfectly horizontal */
         .bone-top .sub-bone-line { right: 0; transform: rotate(-45deg); transform-origin: right center; }
         .bone-bottom .sub-bone-line { right: 0; transform: rotate(45deg); transform-origin: right center; }
 
-        @media (max-width: 1000px) {
-            body { flex-direction: column; overflow-y: auto; height: auto; }
-            .sidebar { width: 100%; height: auto; }
-            .canvas-area { min-height: 700px; }
-        }
     </style>
 </head>
 <body>
@@ -261,7 +268,8 @@
         <hr>
         <h3>الأسباب الرئيسية</h3>
         <div id="categories-list">
-            </div>
+            <!-- Dynamic categories will load here -->
+        </div>
 
         <button class="btn-add" onclick="addCategory()">+ إضافة سبب رئيسي جديد</button>
         
@@ -288,7 +296,6 @@
     </div>
 
     <script>
-        // Default data as requested
         let diagramData = {
             "effect": "عدم حل الواجبات",
             "causes": [
@@ -338,7 +345,6 @@
         function updateCategoryColor(index, val) {
             diagramData.causes[index].color = val;
             renderCanvas();
-            // Update the sidebar left border color to match
             document.getElementById(`cat-box-${index}`).style.borderRightColor = val;
         }
 
@@ -407,11 +413,12 @@
             existingBones.forEach(b => b.remove());
 
             const total = diagramData.causes.length;
-            const spacing = 100 / (total + 1);
+            const spacing = 90 / (total + 1); // Reduced slightly so bones don't hit the exact edges
 
             diagramData.causes.forEach((cat, index) => {
                 const isTop = index % 2 === 0;
-                const pos = 100 - (spacing * (index + 1));
+                // Shift position incrementally to stagger them nicely
+                const pos = 100 - (5 + spacing * (index + 1));
                 const catColor = cat.color || "#3498db";
                 
                 const bone = document.createElement('div');
@@ -420,10 +427,11 @@
                 
                 bone.innerHTML = `<div class="bone-label-box" style="background-color: ${catColor}">${cat.name}</div>`;
                 
-                // Sub causes
-                const subSpacing = 100 / (cat.subs.length + 1);
+                // FIX 3: Adjusted sub-bone spacing so they don't overlap with the spine line
+                const subSpacing = 75 / (cat.subs.length + 1);
                 cat.subs.forEach((sub, sIndex) => {
-                    const subPos = subSpacing * (sIndex + 1);
+                    // Starts from 15% of the bone to avoid intersection with spine
+                    const subPos = 15 + subSpacing * (sIndex + 1);
                     const subLine = document.createElement('div');
                     subLine.className = 'sub-bone-line';
                     subLine.style[isTop ? 'bottom' : 'top'] = subPos + '%';
@@ -432,7 +440,7 @@
                     subText.className = 'sub-bone-text';
                     subText.innerText = sub;
                     subText.style.right = '65px'; // Distance from the small line
-                    subText.style.top = '-10px';
+                    subText.style.top = '-12px'; // Center text vertically on line
                     
                     subLine.appendChild(subText);
                     bone.appendChild(subLine);
@@ -442,7 +450,6 @@
             });
         }
 
-        // Feature 1: Export as JSON
         function exportJSON() {
             diagramData.exportedAt = new Date().toISOString();
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(diagramData, null, 2));
@@ -452,7 +459,6 @@
             dlAnchorElem.click();
         }
 
-        // Feature 2: Import JSON
         function importJSON(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -471,20 +477,19 @@
                 }
             };
             reader.readAsText(file);
-            // Reset input so the same file can be uploaded again if needed
             event.target.value = ''; 
         }
 
-        // Feature 3: Export as Image (PNG)
         async function exportAsImage() {
             const target = document.getElementById('export-target');
             const canvas = await html2canvas(target, {
-                scale: 2, // High resolution
+                scale: 2, 
                 backgroundColor: "#ffffff",
-                logging: false
+                logging: false,
+                useCORS: true
             });
             const link = document.createElement('a');
-            link.download = `Fishbone_Diagram_${new Date().getTime()}.png`;
+            link.download = `Fishbone_Diagram_Final.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
         }
